@@ -54,7 +54,7 @@ spec:
     name: Publish to Gitlab
     action: publish:gitlab
     input:
-      allowedHosts: ['niaticlabs.com']
+      allowedHosts: ['domain.com']
       repoUrl: 'gitlab.domain.com?repo=${{ parameters.name }}&owner=sre-security'
       sourcePath: './content'
       description: ${{ parameters.description }}
