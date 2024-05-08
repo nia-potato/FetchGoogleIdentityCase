@@ -1,0 +1,79 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: gitlab-demo
+  title: Gitlab DEMO
+  description: Scaffolder Gitlab Demo
+spec:
+  owner: security
+  type: service
+
+  parameters:
+  - title: Fill in some steps
+    required:
+    - name
+    properties:
+      name:
+        title: Name
+        type: string
+        description: Unique name of the component
+        ui:autofocus: true
+        ui:options:
+          rows: 5
+  - title: Choose a location
+    required:
+    - repoUrl
+    properties:
+      repoUrl:
+        title: Repository Location
+        type: string
+        ui:field: RepoUrlPicker
+        ui:options:
+          allowedHosts:
+          - gitlab.domain.com
+  steps:
+  - id: fetch-base
+    name: Fetch Base
+    action: fetch:template
+    input:
+      url: ./content
+      targetPath: ./content
+      values:
+        name: ${{ parameters.name }}
+  - id: debug
+    name: List workspace
+    action: debug:log
+    input:
+      listWorkspace: true
+  - id: debug2
+    name: Debug Info
+    action: debug:log
+    input:
+      message: "Author Name: ${{ entity.metadata.name }}, Author Email: ${{ entity.spec.profile.email }}, Test Name: ${{ user.entity.metadata.name }}, Test Email: ${{ user.entity.metadata.email }}, UserRef: ${{ user.ref }} "
+  - id: publish
+    name: Publish to Gitlab
+    action: publish:gitlab
+    input:
+      allowedHosts: ['niaticlabs.com']
+      repoUrl: 'gitlab.domain.com?repo=${{ parameters.name }}&owner=sre-security'
+      sourcePath: './content'
+      description: ${{ parameters.description }}
+      visibility: public
+      defaultBranch: main
+      gitAuthorName:  ${{ user.entity.metadata.name }}
+      gitAuthorEmail: '${{ user.entity.metadata.name }}@domain.com'
+      gitCommitMessage: Initial commit from '${{ parameters.name }}'
+      topics: ["from-template", "backstage"]
+  - id: catalog
+    name: Register to Catalog
+    action: catalog:register
+    input:
+      repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
+      optional: true
+  output:
+    links:
+    - title: View on Gitlab
+      url: ${{ steps.publish.output.remoteUrl }}
+    - title: View in Catalog
+      icon: catalog
+      entityRef: ${{ steps.catalog.output.entityRef }}
